@@ -1,23 +1,65 @@
 #!/usr/bin/python3
 
 # INET4031
-# Duale Hashie
-# 10/27d
-# Date Last Modified
+# Duale Hashi
+# Date Created: 10/27
+# Date Last Modified: 10/27
 
-#REPLACE THIS COMMENT - identify what each of these imports is for.
+# os = run OS commands; re = detect comment lines; sys = read lines from STDIN
 import os
 import re
 import sys
 
-#YOUR CODE SHOULD HAVE NONE OF THE INSTRUCTORS COMMENTS REMAINING WHEN YOU ARE FINISHED
-#PLEASE REPLACE INSTRUCTOR "PROMPTS" WITH COMMENTS OF YOUR OWN
-
+# Read each line from the redirected input file
 def main():
     for line in sys.stdin:
 
-        #REPLACE THIS COMMENT - this "regular expression" is searching for the presence of a character - what is it and why?
-        #The important part is WHY it is looking for a particular characer - what is that character being used for?
+        # Skip any line that starts with '#' (these are comments in the input file)
+        match = re.match("^#", line)
+
+        # Remove extra spaces and split each input line by ':' into fields
+        fields = line.strip().split(':')
+
+        # Skip lines that are comments or don’t have exactly 5 fields to avoid bad data
+        if match or len(fields) != 5:
+            continue
+
+        # Store username, password, and GECOS info (GECOS is full name info in /etc/passwd)
+        username = fields[0]
+        password = fields[1]
+        gecos = "%s %s,,," % (fields[3], fields[2])
+
+        # Split group field by commas to handle multiple groups
+        groups = fields[4].split(',')
+
+        # Create user account
+        print("==> Creating account for %s..." % (username))
+        # Build adduser command that adds the user with no password but includes GECOS info
+        cmd = "/usr/sbin/adduser --disabled-password --gecos '%s' %s" % (gecos, username)
+        print(cmd)
+        os.system(cmd)
+
+        # Set user password using echo and passwd command
+        print("==> Setting the password for %s..." % (username))
+        # Command sends the password twice (for confirmation) to passwd via pipe
+        cmd = "/bin/echo -ne '%s\n%s' | /usr/bin/sudo /usr/bin/passwd %s" % (password, password, username)
+        print(cmd)
+        os.system(cmd)
+
+        # Add user to groups if the group is not '-'
+        for group in groups:
+            # Only add user to actual groups; skip '-' entries
+            if group != '-':
+                print("==> Assigning %s to the %s group..." % (username, group))
+                cmd = "/usr/sbin/adduser %s %s" % (username, group)
+                print(cmd)
+                os.system(cmd)
+
+if __name__ == '__main__':
+    main()
+    for line in sys.stdin:
+
+        # Skip the line that stats with # line
         match = re.match("^#",line)
 
         #REPLACE THIS COMMENT - why is the code doing this?
@@ -45,27 +87,3 @@ def main():
         cmd = "/usr/sbin/adduser --disabled-password --gecos '%s' %s" % (gecos,username)
 
         #REMOVE THIS COMMENT AFTER YOU UNDERSTAND WHAT TO DO - these statements are currently "commented out" as talked about in class
-        #The first time you run the code...what should you do here?  If uncommented - what will the os.system(cmd) statemetn attempt to do?
-        #print cmd
-        #os.system(cmd)
-
-        #REPLACE THIS COMMENT - what is the point of this print statement?
-        print("==> Setting the password for %s..." % (username))
-        #REPLACE THIS COMMENT - what is this line doing?  What will the variable "cmd" contain. You'll need to lookup what these linux commands do.
-        cmd = "/bin/echo -ne '%s\n%s' | /usr/bin/sudo /usr/bin/passwd %s" % (password,password,username)
-
-        #REMOVE THIS COMMENT AFTER YOU UNDERSTAND WHAT TO DO - these statements are currently "commented out" as talked about in class
-        #The first time you run the code...what should you do here?  If uncommented - what will the os.system(cmd) statemetn attempt to do?
-        #print cmd
-        #os.system(cmd)
-
-        for group in groups:
-            #REPLACE THIS COMMENT with one that answers "What is this IF statement looking for and why? If group !='-' what happens?"
-            if group != '-':
-                print("==> Assigning %s to the %s group..." % (username,group))
-                cmd = "/usr/sbin/adduser %s %s" % (username,group)
-                #print cmd
-                #os.system(cmd)
-
-if __name__ == '__main__':
-    main()
